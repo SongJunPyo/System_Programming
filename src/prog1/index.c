@@ -4,9 +4,7 @@
 #include <string.h>
 #include <time.h>
 #include "auth.h"
-
-#define INDEX_PATH "Student/Index.dat"
-#define TMP_PATH    "Student/Index.tmp"
+#include "path_utils.h"
 
 // 현재 타임스탬프 문자열 얻기
 void get_timestamp(char *buf, size_t len) {
@@ -20,7 +18,10 @@ void get_timestamp(char *buf, size_t len) {
 
 // Index.dat의 모든 라인 출력
 void print_index() {
-    FILE *fp = fopen(INDEX_PATH, "r");
+    char index_path[PATH_MAX];
+    get_student_path(index_path, sizeof(index_path), "Index.dat");
+
+    FILE *fp = fopen(index_path, "r");
     if (!fp) {
         perror("Index.dat read");
         exit(EXIT_FAILURE);
@@ -30,14 +31,19 @@ void print_index() {
     while (fgets(line, sizeof(line), fp)) {
         fputs(line, stdout);
     }
-    puts("-------------------");
+    puts("----Complete----");
     fclose(fp);
 }
 
 // Index에 새 레코드 추가: next_id|student_id|timestamp
 void append_index(const char *student_id) {
-    FILE *rf = fopen(INDEX_PATH, "r");
-    FILE *wf = fopen(TMP_PATH, "w");
+    char index_path[PATH_MAX];
+    char temp_path[PATH_MAX];
+    get_student_path(index_path, sizeof(index_path), "Index.dat");
+    get_student_path(temp_path, sizeof(temp_path), "Index.tmp");
+
+    FILE *rf = fopen(index_path, "r");
+    FILE *wf = fopen(temp_path, "w");
     if (!rf || !wf) {
         perror("Index open");
         exit(EXIT_FAILURE);
@@ -80,7 +86,7 @@ void append_index(const char *student_id) {
     fclose(wf);
 
     // 3) 원본 교체
-    if (rename(TMP_PATH, INDEX_PATH) != 0) {
+    if (rename(temp_path, index_path) != 0) {
         perror("Index replace");
         exit(EXIT_FAILURE);
     }

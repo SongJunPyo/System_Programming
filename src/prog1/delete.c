@@ -4,10 +4,9 @@
 #include <string.h>
 #include <unistd.h>
 #include "auth.h"
+#include "path_utils.h" // 경로 유틸리티 헤더 추가
 
-#define STUDENT_DIR "Student"
-#define INDEX_PATH STUDENT_DIR "/Index.dat"
-#define TEMP_PATH STUDENT_DIR "/Index.tmp"
+// #define 들은 이제 필요 없으므로 삭제합니다.
 
 void delete_student(void) {
     if (!is_root()) {
@@ -15,23 +14,37 @@ void delete_student(void) {
         exit(EXIT_FAILURE);
     }
 
-    char id[32], path[128];
+    char id[32];
     printf("삭제할 학생 학번: ");
     if (scanf("%31s", id) != 1) return;
 
+    // --- 수정된 부분 ---
+    char student_dat_path[PATH_MAX];
+    char student_filename[64];
+    snprintf(student_filename, sizeof(student_filename), "%s.dat", id);
+    get_student_path(student_dat_path, sizeof(student_dat_path), student_filename);
+
     // 1) 학생 정보 파일 삭제
-    snprintf(path, sizeof(path), "%s/%s.dat", STUDENT_DIR, id);
-    if (remove(path) == 0) {
-        printf("삭제됨: %s\n", path);
+    if (remove(student_dat_path) == 0) {
+        printf("삭제됨: %s\n", student_dat_path);
     } else {
-        fprintf(stderr, "파일 삭제 실패: %s\n", path);
+        fprintf(stderr, "파일 삭제 실패: %s\n", student_dat_path);
         return;
     }
 
+    // --- 수정된 부분 ---
+    char index_path[PATH_MAX];
+    char temp_path[PATH_MAX];
+    get_student_path(index_path, sizeof(index_path), "Index.dat");
+    get_student_path(temp_path, sizeof(temp_path), "Index.tmp");
+
     // 2) Index.dat 업데이트 (학번,시간 공백)
-    FILE *rf = fopen(INDEX_PATH, "r");
-    FILE *wf = fopen(TEMP_PATH, "w");
-    if (!rf || !wf) { perror("Index 파일 열기"); exit(EXIT_FAILURE); }
+    FILE *rf = fopen(index_path, "r");
+    FILE *wf = fopen(temp_path, "w");
+    if (!rf || !wf) { 
+        perror("Index 파일 열기"); 
+        exit(EXIT_FAILURE); 
+    }
 
     char line[256];
     while (fgets(line, sizeof(line), rf)) {
@@ -49,7 +62,7 @@ void delete_student(void) {
     fclose(wf);
 
     // 원본 덮어쓰기
-    if (rename(TEMP_PATH, INDEX_PATH) != 0) {
+    if (rename(temp_path, index_path) != 0) {
         perror("Index 갱신 실패");
         exit(EXIT_FAILURE);
     }

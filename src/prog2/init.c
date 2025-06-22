@@ -1,3 +1,4 @@
+//src/prog2/init.c
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,9 +7,7 @@
 #include <errno.h>
 #include "auth.h"
 #include "subject.h"
-
-#define GRADE_DIR   "Grade"
-#define CONF_FILE   GRADE_DIR "/department.conf"
+#include "path_utils.h"
 
 int init_grade_system(void) {
     uid_t uid = getuid();
@@ -17,11 +16,14 @@ int init_grade_system(void) {
         return EXIT_FAILURE;
     }
 
+    char grade_dir_path[PATH_MAX];
+    snprintf(grade_dir_path, sizeof(grade_dir_path), "%s/Grade", g_project_root);
+
     struct stat st;
-    if (stat(GRADE_DIR, &st) == -1) {
+    if (stat(grade_dir_path, &st) == -1) {
         if (errno != ENOENT) { perror("stat Grade"); return EXIT_FAILURE; }
-        if (mkdir(GRADE_DIR, 0755) == -1) { perror("mkdir Grade"); return EXIT_FAILURE; }
-        printf("Created: %s/\n", GRADE_DIR);
+        if (mkdir(grade_dir_path, 0755) == -1) { perror("mkdir Grade"); return EXIT_FAILURE; }
+        printf("Created: %s/\n", grade_dir_path);
     }
 
     char dept[64];
@@ -29,7 +31,10 @@ int init_grade_system(void) {
     if (!fgets(dept, sizeof(dept), stdin)) return EXIT_FAILURE;
     dept[strcspn(dept, "\n")] = '\0';
 
-    FILE *cf = fopen(CONF_FILE, "w");
+    char conf_path[PATH_MAX];
+    get_grade_path(conf_path, sizeof(conf_path), "department.conf");
+
+    FILE *cf = fopen(conf_path, "w");
     if (!cf) { perror("fopen department.conf"); return EXIT_FAILURE; }
     fprintf(cf, "%s\n", dept);
     fclose(cf);
@@ -46,7 +51,7 @@ int init_grade_system(void) {
         if (!fgets(name, sizeof(name), stdin)) return EXIT_FAILURE;
         name[strcspn(name, "\n")] = '\0';
         add_subject(name);
-        printf("Created: %s/%s.dat\n", GRADE_DIR, name);
+        printf("Created: %s/%s.dat\n", grade_dir_path, name);
     }
     printf("초기화 완료: %d 과목 생성됨.\n", n);
     return EXIT_SUCCESS;

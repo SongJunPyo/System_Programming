@@ -4,19 +4,18 @@
 #include <string.h>
 #include <unistd.h>
 #include "auth.h"
+#include "path_utils.h" // 경로 유틸리티 헤더 추가
 
-#define STUDENT_DIR   "Student"
-#define INDEX_PATH    STUDENT_DIR "/Index.dat"
-
-// index.c에서 제공하는 함수
-void init_index(void);
-void print_index(void);
-void append_index(const char *);
+// index.c에서 제공하는 함수 선언
 void get_timestamp(char *buf, size_t len);
 
 // index.c 내부에서만 쓰던 get_timestamp 재선언
 static void update_index_timestamp(const char *student_id) {
-    FILE *f = fopen(INDEX_PATH, "r+");
+    // --- 수정된 부분 ---
+    char index_path[PATH_MAX];
+    get_student_path(index_path, sizeof(index_path), "Index.dat");
+
+    FILE *f = fopen(index_path, "r+");
     if (!f) { perror("Index.dat open"); exit(EXIT_FAILURE); }
 
     char line[256], out[256];
@@ -28,11 +27,8 @@ static void update_index_timestamp(const char *student_id) {
             continue;
         }
         if (strcmp(sid, student_id) == 0) {
-            // 새 타임스탬프 생성
             get_timestamp(ts, sizeof(ts));
-            // 덮어쓸 문자열 준비
             snprintf(out, sizeof(out), "%d|%s|%s\n", num, sid, ts);
-            // 파일 포인터를 해당 라인 시작으로 되돌림
             fseek(f, -strlen(line), SEEK_CUR);
             fputs(out, f);
             break;
@@ -51,28 +47,35 @@ void edit_student(void) {
     printf("수정할 학생 학번: ");
     if (scanf("%31s", id) != 1) return;
 
-    // 데이터 파일 경로
-    char path[128];
-    snprintf(path, sizeof(path), "%s/%s.dat", STUDENT_DIR, id);
+    // --- 수정된 부분 ---
+    char path[PATH_MAX];
+    char filename[64];
+    snprintf(filename, sizeof(filename), "%s.dat", id);
+    get_student_path(path, sizeof(path), filename);
 
-    // 원본 파일 열기
-    FILE *fp = fopen(path, "r+");
-    if (!fp) {
+    // 원본 파일 존재 확인
+    if (access(path, F_OK) != 0) {
         fprintf(stderr, "학생 정보 (%s) 가 없습니다.\n", path);
         return;
     }
-    fclose(fp);
 
     // 새 정보 입력
     char name[64], dob[16], major[64], status[16];
-    printf("새 이름: ");      scanf("%63s", name);
-    printf("새 생년월일: "); scanf("%15s", dob);
-    printf("새 학과: ");      scanf("%63s", major);
-    printf("새 상태: ");      scanf("%15s", status);
+    printf("새 이름: ");       
+    scanf("%63s", name);
+    printf("새 생년월일: "); 
+    scanf("%15s", dob);
+    printf("새 학과: ");       
+    scanf("%63s", major);
+    printf("새 상태: ");       
+    scanf("%15s", status);
 
     // 덮어쓰기
-    fp = fopen(path, "w");
-    if (!fp) { perror("fopen"); exit(EXIT_FAILURE); }
+    FILE *fp = fopen(path, "w");
+    if (!fp) { 
+        perror("fopen"); 
+        exit(EXIT_FAILURE); 
+    }
     fprintf(fp,
         "학번: %s\n"
         "이름: %s\n"
@@ -88,4 +91,3 @@ void edit_student(void) {
 }
 
 // 모든 정보를 수정하지 말고 원하는 정보만 수정할 수 있도록 변경
-

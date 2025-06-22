@@ -3,7 +3,7 @@
 #include <unistd.h>
 
 const uid_t STUDENT_UIDS[]   = { /* 채점 환경 UID 삽입 */ };
-const uid_t PROFESSOR_UIDS[] = { /* 채점 환경 UID 삽입 */ };
+const uid_t PROFESSOR_UIDS[] = { 1008 };
 
 bool is_root(void) {
     return getuid() == 0;

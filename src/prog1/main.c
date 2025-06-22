@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include "auth.h"
 #include "student.h"
+#include "path_utils.h"
 
 // 외부 모듈 함수 선언
 void ensure_student_dir_and_index(void);  // init.c
@@ -15,7 +16,9 @@ void edit_student(void);                  // edit.c
 void delete_student(void);                // delete.c
 void initialize_all(void);                // initialize.c
 
-int main(void) {
+int main(int argc, char *argv[]) {
+    set_project_root(argv[0]);
+
     if (!is_root()) {
         fprintf(stderr, "Error: 관리자만 실행 가능합니다 (UID=%d)\n", getuid());
         return EXIT_FAILURE;

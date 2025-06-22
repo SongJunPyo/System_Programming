@@ -5,11 +5,15 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include "student.h"
+#include "path_utils.h"
 
-#define STUDENT_DIR "Student"
 
 int get_students_by_major(const char *major, char ids[][32], int max) {
-    DIR *d = opendir(STUDENT_DIR);
+
+    char student_dir_path[PATH_MAX];
+    snprintf(student_dir_path, sizeof(student_dir_path), "%s/Student", g_project_root);
+
+    DIR *d = opendir(student_dir_path);
     if (!d) return 0;
     struct dirent *e;
     int cnt = 0;
@@ -17,7 +21,7 @@ int get_students_by_major(const char *major, char ids[][32], int max) {
     while ((e = readdir(d)) && cnt < max) {
         const char *name = e->d_name;
         // "." 및 ".." 건너뛰기
-        if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0) 
+        if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0 || strcmp(name, "Index.dat") == 0)
             continue;
         // .dat 확장자 검사
         const char *ext = strrchr(name, '.');
@@ -25,8 +29,8 @@ int get_students_by_major(const char *major, char ids[][32], int max) {
             continue;
 
         // 실제 파일인지 stat으로 확인
-        char path[256];
-        snprintf(path, sizeof(path), "%s/%s", STUDENT_DIR, name);
+        char path[PATH_MAX];
+        snprintf(path, sizeof(path), "%s/%s", student_dir_path, name);
         struct stat st;
         if (stat(path, &st) == -1) 
             continue;

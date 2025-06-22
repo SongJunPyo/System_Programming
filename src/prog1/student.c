@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "student.h"
+#include "path_utils.h" // 경로 유틸리티 헤더 추가
 
 // Student/<id>.dat 생성
 void create_student_file(const char *id,
@@ -10,8 +11,13 @@ void create_student_file(const char *id,
                          const char *dob,
                          const char *major,
                          const char *status) {
-    char path[128];
-    snprintf(path, sizeof(path), "Student/%s.dat", id);
+    char path[PATH_MAX];
+    char filename[64];
+    snprintf(filename, sizeof(filename), "%s.dat", id);
+
+    // 수정된 경로 생성 함수 사용
+    get_student_path(path, sizeof(path), filename);
+
     FILE *fp = fopen(path, "w");
     if (!fp) {
         perror("student file");

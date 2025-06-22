@@ -1,3 +1,4 @@
+//src/prog2/grade.c
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,8 +8,7 @@
 #include "grade.h"
 #include "subject.h"
 #include "student.h"
-
-#define GRADE_DIR "Grade"
+#include "path_utils.h"
 
 static void get_timestamp(char *buf, size_t len) {
     time_t t; struct tm *tm;
@@ -25,8 +25,13 @@ void input_grades(const char *subject) {
     char dept[64]; get_department(dept, sizeof(dept));
     char ids[100][32];
     int n = get_students_by_major(dept, ids, 100);
-    char path[128];
-    snprintf(path, sizeof(path), "%s/%s.dat", GRADE_DIR, subject);
+    
+    // --- 수정된 부분 ---
+    char path[PATH_MAX];
+    char grade_filename[128];
+    snprintf(grade_filename, sizeof(grade_filename), "%s.dat", subject);
+    get_grade_path(path, sizeof(path), grade_filename);
+
     FILE *f = fopen(path, "a+");
     if (!f) { perror("open grade"); exit(EXIT_FAILURE); }
     char ts[32], buf[16];
@@ -46,11 +51,15 @@ void edit_grades(const char *subject) {
     if (!is_root() && !is_professor(uid)) {
         fprintf(stderr, "권한 없음\n"); exit(EXIT_FAILURE);
     }
-    char path[128], tmp[128];
-    snprintf(path, sizeof(path), "%s/%s.dat", GRADE_DIR, subject);
-    snprintf(tmp, sizeof(tmp),  "%s/%s.tmp", GRADE_DIR, subject);
+    char path[PATH_MAX], tmp_path[PATH_MAX];
+    char grade_filename[128], tmp_filename[128];
+    snprintf(grade_filename, sizeof(grade_filename), "%s.dat", subject);
+    snprintf(tmp_filename, sizeof(tmp_filename), "%s.tmp", subject);
+    get_grade_path(path, sizeof(path), grade_filename);
+    get_grade_path(tmp_path, sizeof(tmp_path), tmp_filename);
+
     FILE *rf = fopen(path, "r");
-    FILE *wf = fopen(tmp, "w");
+    FILE *wf = fopen(tmp_path, "w");
     if (!rf || !wf) { perror("open"); exit(EXIT_FAILURE); }
     char line[256];
     while (fgets(line, sizeof(line), rf)) {
@@ -72,5 +81,5 @@ void edit_grades(const char *subject) {
     }
     fclose(rf);
     fclose(wf);
-    rename(tmp, path);
+    rename(tmp_path, path);
 }
