@@ -2,8 +2,8 @@
 #include "auth.h"
 #include <unistd.h>
 
-const uid_t STUDENT_UIDS[]   = { /* 채점 환경 UID 삽입 */ };
-const uid_t PROFESSOR_UIDS[] = { 1008 };
+const uid_t STUDENT_UIDS[]   = { 1016, 1017, 1018, 1019, 1020, 1021, 1022, 1023, 1024, 1025 };
+const uid_t PROFESSOR_UIDS[] = { 1012, 1013, 1014, 1015 };
 
 bool is_root(void) {
     return getuid() == 0;

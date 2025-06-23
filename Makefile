@@ -85,3 +85,7 @@ $(BINDIR)/prog3: $(COMMON_OBJS) $(PROG3_OBJS) $(OBJDIR)/prog2/subject.o $(OBJDIR
 
 clean:
 	rm -rf $(BINDIR) $(OBJDIR) Student Grade
+
+install: all
+	sudo chown root:root $(BINDIR)/prog1 $(BINDIR)/prog2 $(BINDIR)/prog3
+	sudo chmod 4755 $(BINDIR)/prog1 $(BINDIR)/prog2  $(BINDIR)/prog3
